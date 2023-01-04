@@ -1,0 +1,33 @@
+import requests
+import json
+import os
+import datetime
+
+api_key = 'API_KEY_HERE'
+headers = {'Authorization': 'Bearer ' + api_key}
+url = 'https://URL_DO_GRAFANA/api/search'
+
+response = requests.get(url, headers=headers)
+
+if response.status_code != 200:
+    print('An error occurred:', response.text)
+else:
+    data = json.loads(response.text)
+
+    now = datetime.datetime.now()
+    date_string = now.strftime('%Y-%m-%d %H-%M-%S')
+
+    desktop_path = os.path.join(os.path.join(os.path.expanduser('~')), 'Desktop')
+    backup_folder_path = os.path.join(desktop_path, 'Nome_da_pasta_de_backup ' + date_string + ' Backup')
+    os.makedirs(backup_folder_path)
+
+    for dashboard in data:
+        dashboard_url = 'https://URL_DO_GRAFANA/api/dashboards/uid/' + dashboard['uid']
+        dashboard_response = requests.get(dashboard_url, headers=headers)
+        dashboard_data = json.loads(dashboard_response.text)
+
+        file_path = os.path.join(backup_folder_path, dashboard['title'] + '.json')
+        with open(file_path, 'w') as f:
+            f.write(json.dumps(dashboard_data['dashboard']))
+
+print('backup completo')
